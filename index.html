@@ -124,6 +124,7 @@ import {
     getFirestore, doc, setDoc, getDoc, updateDoc, increment, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
+/* 🔥 Firebase Config */
 const firebaseConfig = {
     apiKey: "AIzaSyC-wOINz7Hz9r2aUXlUhfmPqwuxTGmkIK8",
     authDomain: "main-estateearn.firebaseapp.com",
@@ -136,40 +137,47 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-document.getElementById("registerForm").addEventListener("submit", async e => {
+/* 🔗 Elements */
+const usernameEl = document.getElementById("username");
+const referralEl = document.getElementById("referral");
+const withdrawalEl = document.getElementById("withdrawal");
+
+document.getElementById("registerForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const username = usernameEl.value.trim();
     const referral = referralEl.value.trim();
-    const password = passwordEl.value;
-    const withdrawal = withdrawalEl.value;
 
-    if(referral && referral === username){
+    if (referral && referral === username) {
         alert("Referral code cannot be your username");
         return;
     }
 
-    const userRef = doc(db,"users",username);
-    if((await getDoc(userRef)).exists()){
+    const userRef = doc(db, "users", username);
+
+    if ((await getDoc(userRef)).exists()) {
         alert("Username already exists");
         return;
     }
 
     let validReferral = "";
-    if(referral){
-        const refDoc = await getDoc(doc(db,"users",referral));
-        if(refDoc.exists()){
+    if (referral) {
+        const refRef = doc(db, "users", referral);
+        const refSnap = await getDoc(refRef);
+
+        if (refSnap.exists()) {
             validReferral = referral;
-            await updateDoc(doc(db,"users",referral),{
+            await updateDoc(refRef, {
                 referralCount: increment(1)
             });
-        }else{
+        } else {
             alert("Referral code not found. It has been removed.");
         }
     }
 
-    await setDoc(userRef,{
-        username,
+    /* ✅ Create User with ROLE = EARNER */
+    await setDoc(userRef, {
+        username: username,
         referralCode: validReferral,
         referralCount: 0,
         welcomeBonusStatus: "pending",
@@ -177,17 +185,15 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
         depositBalance: 0,
         earningBalance: 0,
         totalBalance: 0,
-        role: "earner",
+        role: "earner",          // 🔥 ROLE ADDED HERE
         createdAt: serverTimestamp()
     });
 
-    document.getElementById("successPopup").style.display="block";
-    setTimeout(()=>location.href="login.html",3000);
+    document.getElementById("successPopup").style.display = "block";
+    setTimeout(() => {
+        window.location.href = "login.html";
+    }, 3000);
 });
-
-const usernameEl = document.getElementById("username");
-const referralEl = document.getElementById("referral");
-const withdrawalEl = document.getElementById("withdrawal");
 </script>
 
 </body>
