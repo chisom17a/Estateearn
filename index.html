@@ -22,7 +22,7 @@ body{
     background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
 }
 .register-card{
-    background:#fff;
+    background:#de3;
     width:100%;
     max-width:420px;
     border-radius:16px;
@@ -32,6 +32,7 @@ body{
 .logo{text-align:center;margin-bottom:20px}
 .logo img{width:90px}
 .logo h2{margin-top:10px;color:#203a43}
+
 .form-group{margin-bottom:15px}
 .form-group label{font-size:13px}
 .form-group input{
@@ -49,9 +50,10 @@ small{font-size:11px;color:#555}
     background:linear-gradient(to right,#2c5364,#0f2027);
     color:#fff;
     cursor:pointer;
-    margin-top:10px;
 }
 .footer-text{text-align:center;margin-top:18px;font-size:13px}
+.footer-text a{color:#203a43;font-weight:500;text-decoration:none}
+
 #successPopup{
     position:fixed;
     top:20px;
@@ -81,7 +83,7 @@ small{font-size:11px;color:#555}
 
         <div class="form-group">
             <label>Email</label>
-            <input id="email" type="email" required>
+            <input type="email" id="email" required>
         </div>
 
         <div class="form-group">
@@ -91,13 +93,14 @@ small{font-size:11px;color:#555}
 
         <div class="form-group">
             <label>Password</label>
-            <input id="password" type="password" required>
-            <small>Letters & numbers</small>
+            <input type="password" id="password" required>
+            <small>Must contain letters and numbers</small>
         </div>
 
         <div class="form-group">
             <label>Withdrawal Password</label>
             <input id="withdrawal" maxlength="6" required>
+            <small>Exactly 6 digits</small>
         </div>
 
         <div class="form-group">
@@ -109,104 +112,82 @@ small{font-size:11px;color:#555}
     </form>
 
     <div class="footer-text">
-        Already registered? <a href="login.html">Login</a>
+        Already have an account? <a href="login.html">Login</a>
     </div>
 </div>
 
-<div id="successPopup">Registration successful! Redirecting…</div>
+<div id="successPopup">Registration successful! Redirecting...</div>
 
-<!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  increment,
-  serverTimestamp
+    getFirestore, doc, setDoc, getDoc, updateDoc, increment, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC-wOINz7Hz9r2aUXlUhfmPqwuxTGmkIK8",
-  authDomain: "main-estateearn.firebaseapp.com",
-  projectId: "main-estateearn",
-  storageBucket: "main-estateearn.firebasestorage.app",
-  messagingSenderId: "189305498914",
-  appId: "1:189305498914:web:77fe6b137b2480e3f2c97b"
+    apiKey: "AIzaSyC-wOINz7Hz9r2aUXlUhfmPqwuxTGmkIK8",
+    authDomain: "main-estateearn.firebaseapp.com",
+    projectId: "main-estateearn",
+    storageBucket: "main-estateearn.firebasestorage.app",
+    messagingSenderId: "189305498914",
+    appId: "1:189305498914:web:77fe6b137b2480e3f2c97b"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Autofill referral
-const params = new URLSearchParams(window.location.search);
-if(params.get("ref")){
-  document.getElementById("referral").value = params.get("ref");
-}
-
 document.getElementById("registerForm").addEventListener("submit", async e => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const username = document.getElementById("username").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const password = document.getElementById("password").value;
-  const withdrawal = document.getElementById("withdrawal").value;
-  let referral = document.getElementById("referral").value.trim();
+    const username = usernameEl.value.trim();
+    const referral = referralEl.value.trim();
+    const password = passwordEl.value;
+    const withdrawal = withdrawalEl.value;
 
-  if(referral && referral === username){
-    alert("You cannot use your username as referral code");
-    referral = "";
-  }
-
-  const userRef = doc(db, "users", username);
-  const userSnap = await getDoc(userRef);
-  if(userSnap.exists()){
-    alert("Username already exists");
-    return;
-  }
-
-  // Validate referral
-  let validReferral = null;
-  if(referral){
-    const refRef = doc(db, "users", referral);
-    const refSnap = await getDoc(refRef);
-    if(refSnap.exists()){
-      validReferral = referral;
-      await updateDoc(refRef, {
-        referralCount: increment(1)
-      });
-    }else{
-      alert("Referral code not found. It has been removed.");
-      referral = "";
+    if(referral && referral === username){
+        alert("Referral code cannot be your username");
+        return;
     }
-  }
 
-  const referralBalance = 0;
-  const depositBalance = 0;
-  const earningBalance = 0;
+    const userRef = doc(db,"users",username);
+    if((await getDoc(userRef)).exists()){
+        alert("Username already exists");
+        return;
+    }
 
-  await setDoc(userRef, {
-    username,
-    email,
-    phone,
-    password,
-    withdrawalPassword: withdrawal,
-    referralCode: validReferral,
-    referralCount: 0,
-    welcomeBonusStatus: "pending",
-    referralBalance,
-    depositBalance,
-    earningBalance,
-    totalBalance: referralBalance + depositBalance + earningBalance,
-    createdAt: serverTimestamp()
-  });
+    let validReferral = "";
+    if(referral){
+        const refDoc = await getDoc(doc(db,"users",referral));
+        if(refDoc.exists()){
+            validReferral = referral;
+            await updateDoc(doc(db,"users",referral),{
+                referralCount: increment(1)
+            });
+        }else{
+            alert("Referral code not found. It has been removed.");
+        }
+    }
 
-  document.getElementById("successPopup").style.display = "block";
-  setTimeout(() => window.location.href = "login.html", 3000);
+    await setDoc(userRef,{
+        username,
+        referralCode: validReferral,
+        referralCount: 0,
+        welcomeBonusStatus: "pending",
+        referralBalance: 0,
+        depositBalance: 0,
+        earningBalance: 0,
+        totalBalance: 0,
+        role: "earner",
+        createdAt: serverTimestamp()
+    });
+
+    document.getElementById("successPopup").style.display="block";
+    setTimeout(()=>location.href="login.html",3000);
 });
+
+const usernameEl = document.getElementById("username");
+const referralEl = document.getElementById("referral");
+const withdrawalEl = document.getElementById("withdrawal");
 </script>
 
 </body>
