@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Deposit Proceed | Estate Earn</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{background:#f4f7fb;padding:20px;}
+
+/* Header */
+header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+header h2{color:#2c5364;font-weight:600;}
+header button{
+    padding:6px 12px;
+    border:none;
+    border-radius:6px;
+    background:#2c5364;
+    color:#fff;
+    cursor:pointer;
+}
+
+/* Deposit Card */
+.deposit-card{
+    max-width:600px;
+    margin:0 auto;
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+}
+.deposit-card h3{color:#2c5364;margin-bottom:15px;}
+.deposit-card p{margin-bottom:12px;font-size:14px;color:#333;}
+.deposit-card .highlight{font-weight:600;color:#28a745;}
+.deposit-card .instructions{background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px;font-size:14px;line-height:1.5;}
+.deposit-card input[type="file"]{
+    display:block;
+    margin-top:10px;
+}
+.deposit-card button.submit-proof{
+    margin-top:15px;
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:linear-gradient(to right,#1c1f2b,#2c5364);
+    color:#fff;
+    font-weight:500;
+    cursor:pointer;
+}
+.deposit-card button.submit-proof:hover{opacity:0.9;}
+</style>
+</head>
+<body>
+
+<header>
+    <h2>Confirm Deposit</h2>
+    <button onclick="go('deposit.html')">← Back</button>
+</header>
+
+<div class="deposit-card" id="depositCard">
+    <h3>Deposit Details</h3>
+    <p><strong>Amount:</strong> <span id="depositAmount">₦0</span></p>
+    <p><strong>Payment Method:</strong> <span id="depositMethod">-</span></p>
+
+    <div id="instructions" class="instructions"></div>
+
+    <label for="proof">Upload Payment Proof:</label>
+    <input type="file" id="proof" accept="image/*,application/pdf">
+    <button class="submit-proof" onclick="submitProof()">Submit Proof</button>
+</div>
+
+<script>
+// Authentication
+const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+if(!currentUser || currentUser.role!=="earner"){
+    alert("Access Denied! Login as an earner.");
+    window.location.href="login.html";
+}
+
+// Load current deposit
+const deposit = JSON.parse(localStorage.getItem("currentDeposit"));
+if(!deposit){
+    alert("No deposit found. Please go back and select an amount.");
+    window.location.href = "deposit.html";
+}
+
+// Display deposit info
+document.getElementById("depositAmount").innerText = `₦${deposit.amount.toLocaleString()}`;
+document.getElementById("depositMethod").innerText = deposit.method;
+
+// Show instructions based on method
+const instructionsEl = document.getElementById("instructions");
+
+switch(deposit.method){
+    case "Bank Transfer":
+        instructionsEl.innerHTML = `
+        Make a deposit of <span class="highlight">₦${deposit.amount.toLocaleString()}</span> to the following account:<br>
+        <strong>Bank:</strong> Opay<br>
+        <strong>Account Name:</strong> Chisom Nnonyelu Favour<br>
+        <strong>Account Number:</strong> 9162141283<br>
+        After completing the transfer, upload the proof below.
+        `;
+        break;
+    case "Paystack":
+        instructionsEl.innerHTML = `
+        You will be redirected to Paystack to complete a payment of <span class="highlight">₦${deposit.amount.toLocaleString()}</span>.<br>
+        Please follow the instructions on the Paystack page.`;
+        break;
+    case "USSD":
+        instructionsEl.innerHTML = `
+        Dial the USSD code provided by your bank to make a deposit of <span class="highlight">₦${deposit.amount.toLocaleString()}</span>.<br>
+        After completing, upload a screenshot of the confirmation below.`;
+        break;
+    case "Flutterwave":
+        instructionsEl.innerHTML = `
+        You will be redirected to Flutterwave to complete a payment of <span class="highlight">₦${deposit.amount.toLocaleString()}</span>.<br>
+        Please follow the instructions on the page.`;
+        break;
+    case "Crypto":
+        instructionsEl.innerHTML = `
+        Send <span class="highlight">₦${deposit.amount.toLocaleString()}</span> worth of crypto to the address provided:<br>
+        <strong>Wallet:</strong> 0x123456789ABCDEF<br>
+        After sending, upload the proof of transaction below.`;
+        break;
+    default:
+        instructionsEl.innerHTML = "Please follow the deposit instructions.";
+}
+
+// Submit proof
+function submitProof(){
+    const fileInput = document.getElementById("proof");
+    if(fileInput.files.length===0){
+        alert("Please select a file to upload as proof.");
+        return;
+    }
+
+    // Store deposit with proof in localStorage
+    let deposits = JSON.parse(localStorage.getItem(currentUser.username + "_deposits")) || [];
+    deposits = deposits.map(d=>{
+        if(d.date === deposit.date && d.amount===deposit.amount){
+            d.proof = fileInput.files[0].name;
+            d.status = "Pending Verification";
+        }
+        return d;
+    });
+    localStorage.setItem(currentUser.username + "_deposits", JSON.stringify(deposits));
+
+    alert("Proof uploaded successfully! Your deposit is now pending verification.");
+    go('dashboard.html');
+}
+
+// Navigation
+function go(page){window.location.href = page;}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Support Chat | Estate Earn</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{background:#f4f7fb;display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{
+    width:250px;
+    background:linear-gradient(to bottom,#2c5364,#1c1f2b);
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    padding:20px;
+}
+.sidebar .logo{display:flex;align-items:center;gap:10px;margin-bottom:30px;}
+.sidebar .nav-btn{
+    padding:14px;margin-bottom:10px;border-radius:8px;
+    background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;text-align:left;
+    font-size:14px;
+}
+.sidebar .nav-btn:hover{background:rgba(255,255,255,0.2);}
+
+/* MAIN */
+.main{flex:1;padding:20px;display:flex;flex-direction:column;}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+header .user{font-size:14px;}
+
+/* USER LIST */
+.user-list{
+    width:250px;
+    border-right:1px solid #ccc;
+    background:#fff;
+    overflow-y:auto;
+    max-height:80vh;
+}
+.user-item{
+    padding:12px 16px;
+    border-bottom:1px solid #eee;
+    cursor:pointer;
+    display:flex;justify-content:space-between;align-items:center;
+}
+.user-item:hover{background:#f0f0f0;}
+.unread-badge{
+    background:red;color:#fff;padding:2px 6px;border-radius:50%;font-size:12px;
+}
+
+/* CHAT WINDOW */
+.chat-window{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    background:#fff;
+    margin-left:10px;
+    border-radius:8px;
+    box-shadow:0 4px 12px rgba(0,0,0,.1);
+    overflow:hidden;
+}
+.chat-header{
+    padding:12px;
+    background:linear-gradient(to right,#2c5364,#1c1f2b);
+    color:#fff;
+    font-weight:600;
+    display:flex;justify-content:space-between;align-items:center;
+}
+.chat-messages{
+    flex:1;
+    padding:12px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    background:#f9f9f9;
+}
+.message{
+    max-width:60%;
+    padding:8px 12px;
+    border-radius:12px;
+    word-wrap:break-word;
+}
+.message.user{background:#e0e0e0;align-self:flex-start;}
+.message.admin{background:#2c5364;color:#fff;align-self:flex-end;}
+.chat-input{
+    display:flex;
+    border-top:1px solid #ccc;
+}
+.chat-input input{
+    flex:1;padding:12px;border:none;font-size:14px;
+}
+.chat-input button{
+    padding:12px 18px;
+    border:none;
+    background:linear-gradient(to right,#1c1f2b,#2c5364);
+    color:#fff;
+    cursor:pointer;
+}
+.back-btn{
+    cursor:pointer;
+    font-size:14px;
+    background:#ccc;padding:4px 8px;
+    border-radius:4px;
+}
+.start-chat{
+    cursor:pointer;
+    font-size:20px;
+    font-weight:bold;
+    padding:4px 8px;
+    background:green;color:#fff;border-radius:6px;
+}
+
+/* NEW CHAT MODAL */
+.modal{
+    display:none;
+    position:fixed;
+    top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,0.4);
+    justify-content:center;align-items:center;
+    z-index:1000;
+}
+.modal-content{
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+    width:300px;
+    max-height:80vh;
+    display:flex;
+    flex-direction:column;
+}
+.modal-content h3{
+    margin-bottom:10px;color:#2c5364;
+}
+.modal-content input{
+    padding:8px;
+    border-radius:6px;
+    border:1px solid #ccc;
+    margin-bottom:10px;
+}
+.modal-content .user-select{
+    flex:1;
+    overflow-y:auto;
+    border-top:1px solid #ccc;
+}
+.modal-content .user-item{
+    padding:8px 10px;
+    border-bottom:1px solid #eee;
+    cursor:pointer;
+}
+.modal-content .user-item:hover{
+    background:#f0f0f0;
+}
+.modal-content .close-btn{
+    background:#ccc;
+    border:none;
+    padding:6px;
+    margin-top:10px;
+    border-radius:6px;
+    cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="logo">
+        <img src="owner.png" alt="Estate Earn" style="width:40px;">
+        <h2>Admin Support</h2>
+    </div>
+    <div class="nav-btn" onclick="go('dashboard.html')">📊 Dashboard</div>
+    <div class="nav-btn" onclick="go('investments.html')">💼 Investments</div>
+    <div class="nav-btn" onclick="go('referrals.html')">💸 Referrals</div>
+    <div class="nav-btn" onclick="logout()">🚪 Logout</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+<header>
+    <h2>Support Chat</h2>
+    <div class="user" id="helloUser"></div>
+    <button class="start-chat" onclick="openNewChatModal()">+</button>
+</header>
+
+<div class="layout">
+    <div class="user-list" id="userList"></div>
+    <div class="chat-window" id="chatWindow" style="display:none;">
+        <div class="chat-header">
+            <span id="chatUser"></span>
+            <span class="back-btn" onclick="closeChat()">⬅ Back</span>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input">
+            <input type="text" id="chatInput" placeholder="Type a message...">
+            <button onclick="sendAdminMessage()">Send</button>
+        </div>
+    </div>
+</div>
+
+<!-- NEW CHAT MODAL -->
+<div class="modal" id="newChatModal">
+    <div class="modal-content">
+        <h3>Start New Chat</h3>
+        <input type="text" id="searchUser" placeholder="Search users...">
+        <div class="user-select" id="userSelect"></div>
+        <button class="close-btn" onclick="closeNewChatModal()">Close</button>
+    </div>
+</div>
+
+<footer>© 2026 Estate Earn. All rights reserved.</footer>
+</div>
+
+<script>
+// Helper functions
+function go(page){window.location.href=page;}
+function logout(){localStorage.removeItem("currentUser");window.location.href="login.html";}
+
+// Admin auth
+const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+if(!currentUser || currentUser.role!=="admin"){
+    alert("Access Denied! Admin login required.");
+    window.location.href="login.html";
+}else{
+    document.getElementById("helloUser").innerText="Hello, "+currentUser.username;
+}
+
+let selectedUser = null;
+
+// Load user list with unread counts
+function loadUserList(){
+    const users = JSON.parse(localStorage.getItem("estateUsers")) || [];
+    const messages = JSON.parse(localStorage.getItem("supportMessages")) || [];
+    const userList = document.getElementById("userList");
+    userList.innerHTML="";
+
+    users.forEach(u=>{
+        const unread = messages.filter(m=>m.user===u.username && !m.adminRead).length;
+        const item = document.createElement("div");
+        item.className="user-item";
+        item.innerHTML=`<span>${u.username}</span>${unread>0?'<span class="unread-badge">'+unread+'</span>':''}`;
+        item.onclick=()=>openChat(u.username);
+        userList.appendChild(item);
+    });
+}
+
+// Open chat with user
+function openChat(username){
+    selectedUser=username;
+    document.getElementById("chatWindow").style.display="flex";
+    document.getElementById("chatUser").innerText=username;
+    loadChatMessages();
+}
+
+// Close chat
+function closeChat(){
+    selectedUser=null;
+    document.getElementById("chatWindow").style.display="none";
+    loadUserList();
+}
+
+// Load chat messages
+function loadChatMessages(){
+    const chatMessages = document.getElementById("chatMessages");
+    const messages = JSON.parse(localStorage.getItem("supportMessages")) || [];
+    const convo = messages.filter(m=>m.user===selectedUser);
+    chatMessages.innerHTML="";
+    convo.forEach(m=>{
+        const div = document.createElement("div");
+        div.className="message "+(m.fromAdmin?"admin":"user");
+        div.innerText=m.message;
+        chatMessages.appendChild(div);
+        // Mark admin read
+        if(!m.fromAdmin)m.adminRead=true;
+    });
+    localStorage.setItem("supportMessages", JSON.stringify(messages));
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Send admin message
+function sendAdminMessage(){
+    const input = document.getElementById("chatInput");
+    const msg = input.value.trim();
+    if(msg==="") return;
+
+    const messages = JSON.parse(localStorage.getItem("supportMessages")) || [];
+    messages.push({
+        user:selectedUser,
+        message:msg,
+        date:new Date().toLocaleString(),
+        fromAdmin:true,
+        adminRead:true,
+        userRead:false
+    });
+    localStorage.setItem("supportMessages", JSON.stringify(messages));
+    input.value="";
+    loadChatMessages();
+}
+
+// NEW CHAT MODAL
+const modal = document.getElementById("newChatModal");
+const userSelect = document.getElementById("userSelect");
+const searchUser = document.getElementById("searchUser");
+
+function openNewChatModal(){
+    modal.style.display="flex";
+    populateUserSelect();
+}
+function closeNewChatModal(){modal.style.display="none";searchUser.value="";}
+
+// Populate users in modal
+function populateUserSelect(filter=""){
+    const users = JSON.parse(localStorage.getItem("estateUsers")) || [];
+    userSelect.innerHTML="";
+    users.filter(u=>u.username.toLowerCase().includes(filter.toLowerCase())).forEach(u=>{
+        const div = document.createElement("div");
+        div.className="user-item";
+        div.innerText=u.username;
+        div.onclick=()=>{
+            openChat(u.username);
+            closeNewChatModal();
+        };
+        userSelect.appendChild(div);
+    });
+}
+
+// Search filter
+searchUser.addEventListener("input",()=>populateUserSelect(searchUser.value));
+
+// Initial load
+loadUserList();
+</script>
+</body>
+</html>

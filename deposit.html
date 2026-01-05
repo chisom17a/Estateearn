@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Deposit | Estate Earn</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{background:#f4f7fb;padding:20px;}
+
+/* HEADER */
+header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+header h2{color:#2c5364;font-weight:600;}
+header .nav-btns button{
+    margin-left:10px;
+    padding:6px 12px;
+    border:none;
+    border-radius:6px;
+    background:#2c5364;
+    color:#fff;
+    cursor:pointer;
+    font-weight:500;
+}
+
+/* DEPOSIT CONTAINER */
+.deposit-container{
+    max-width:700px;
+    margin:0 auto;
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+}
+
+/* Amount options */
+.amount-options{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:20px;
+}
+.amount-options button{
+    flex:1 1 calc(25% - 10px);
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:#2c5364;
+    color:#fff;
+    font-weight:500;
+    cursor:pointer;
+    transition:0.3s;
+}
+.amount-options button.selected{background:#28a745;}
+
+/* Payment methods */
+.methods{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:20px;
+}
+.methods button{
+    flex:1 1 calc(33% - 10px);
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:#6c757d;
+    color:#fff;
+    cursor:pointer;
+    transition:0.3s;
+}
+.methods button.selected{background:#0d6efd;}
+
+/* Proceed button */
+button.proceed{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:linear-gradient(to right,#1c1f2b,#2c5364);
+    color:#fff;
+    font-weight:500;
+    cursor:pointer;
+    transition:0.3s;
+}
+button.proceed:hover{opacity:0.9;}
+
+/* HISTORY LIST */
+.history-list{
+    margin-top:30px;
+}
+.history-item{
+    background:#f9f9f9;
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:10px;
+    box-shadow:0 4px 12px rgba(0,0,0,.05);
+}
+.history-item p{margin-bottom:5px;color:#333;font-size:14px;}
+.history-item .status{font-weight:600;color:#28a745;font-size:13px;}
+</style>
+</head>
+<body>
+
+<header>
+    <h2>Deposit Funds</h2>
+    <div class="nav-btns">
+        <button onclick="go('dashboard.html')">← Dashboard</button>
+        <button onclick="go('deposit-history.html')">📜 Deposit History</button>
+    </div>
+</header>
+
+<div class="deposit-container">
+    <h3>Select Amount</h3>
+    <div class="amount-options" id="amountOptions">
+        <button data-value="1000">₦1,000</button>
+        <button data-value="5000">₦5,000</button>
+        <button data-value="10000">₦10,000</button>
+        <button data-value="20000">₦20,000</button>
+        <button data-value="50000">₦50,000</button>
+        <button data-value="100000">₦100,000</button>
+    </div>
+
+    <h3>Select Payment Method</h3>
+    <div class="methods" id="methods">
+        <button data-method="Bank Transfer">Bank Transfer</button>
+        <button data-method="Paystack">Paystack</button>
+        <button data-method="USSD">USSD</button>
+        <button data-method="Flutterwave">Flutterwave</button>
+        <button data-method="Crypto">Crypto</button>
+    </div>
+
+    <button class="proceed" onclick="proceedDeposit()">Proceed</button>
+</div>
+
+<script>
+// =========================
+// Earner Authentication
+// =========================
+const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+if(!currentUser || currentUser.role!=="earner"){
+    alert("Access Denied! Login as an earner.");
+    window.location.href="login.html";
+}
+
+// =========================
+// Select amount & method
+// =========================
+let selectedAmount = null;
+let selectedMethod = null;
+
+const amountBtns = document.querySelectorAll("#amountOptions button");
+amountBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+        amountBtns.forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        selectedAmount = parseFloat(btn.dataset.value);
+    });
+});
+
+const methodBtns = document.querySelectorAll("#methods button");
+methodBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+        methodBtns.forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        selectedMethod = btn.dataset.method;
+    });
+});
+
+// =========================
+// Proceed Deposit
+// =========================
+function proceedDeposit(){
+    if(!selectedAmount || !selectedMethod){
+        alert("Please select an amount and payment method.");
+        return;
+    }
+
+    // Save deposit to localStorage
+    let deposits = JSON.parse(localStorage.getItem(currentUser.username + "_deposits")) || [];
+    const newDeposit = {
+        amount: selectedAmount,
+        method: selectedMethod,
+        date: new Date().toLocaleString(),
+        status: "Pending"
+    };
+    deposits.push(newDeposit);
+    localStorage.setItem(currentUser.username + "_deposits", JSON.stringify(deposits));
+
+    // Redirect to simulated payment page (show account info)
+    localStorage.setItem("currentDeposit", JSON.stringify(newDeposit));
+    window.location.href = "deposit-proceed.html";
+}
+
+// =========================
+// Navigation helper
+// =========================
+function go(page){ window.location.href = page; }
+</script>
+</body>
+</html>

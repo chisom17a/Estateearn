@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Investment Plans | Estate Earn</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+body{
+    margin:0;
+    font-family:'Poppins',sans-serif;
+    background:#f4f7fb;
+    padding:20px;
+}
+
+header{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+header h2{
+    font-weight:600;
+    color:#2c5364;
+}
+
+.nav-buttons{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.nav-buttons button{
+    margin:0 5px;
+    padding:8px 16px;
+    border:none;
+    border-radius:8px;
+    background:#2c5364;
+    color:#fff;
+    cursor:pointer;
+    font-weight:500;
+}
+
+.container{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));
+    gap:20px;
+}
+
+.plan-card{
+    background:#fff;
+    border-radius:14px;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+    padding:20px;
+    transition: transform .3s ease;
+}
+
+.plan-card:hover{
+    transform: translateY(-5px);
+}
+
+.plan-card h3{
+    margin-bottom:10px;
+    color:#2c5364;
+}
+
+.plan-card p{
+    font-size:14px;
+    margin-bottom:6px;
+    color:#555;
+}
+
+.plan-card .expiry{
+    font-weight:600;
+    color:#d9534f;
+}
+
+.plan-card .earnings{
+    margin-top:10px;
+    font-weight:600;
+    color:#28a745;
+}
+
+.plan-card button.claim-btn{
+    margin-top:10px;
+    width:100%;
+    padding:10px;
+    background:linear-gradient(to right,#2c5364,#1c1f2b);
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:500;
+    transition:background .3s ease;
+}
+
+.plan-card button.claim-btn:hover{
+    background:linear-gradient(to right,#1c1f2b,#2c5364);
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h2>My Investment Plans</h2>
+</header>
+
+<div class="nav-buttons">
+    <button onclick="go('dashboard.html')">← Dashboard</button>
+    <button onclick="location.reload()">🔄 Refresh</button>
+</div>
+
+<div class="container" id="plansContainer">
+    <!-- Plans will be injected here -->
+</div>
+
+<script>
+// =========================
+// User Authentication
+// =========================
+const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+if(!currentUser || currentUser.role !== "earner"){
+    alert("Access Denied! Login as an earner.");
+    window.location.href="login.html";
+}
+
+// =========================
+// Config
+// =========================
+const earningsPerHour = 45; // ₦ per hour
+
+// =========================
+// Load Plans
+// =========================
+const plansContainer = document.getElementById("plansContainer");
+let myPlans = JSON.parse(localStorage.getItem(currentUser.username + "_plans")) || [];
+
+function renderPlans(){
+    plansContainer.innerHTML = "";
+
+    if(myPlans.length === 0){
+        plansContainer.innerHTML = "<p style='grid-column:1/-1; text-align:center;'>You have not purchased any investment plans yet.</p>";
+        return;
+    }
+
+    myPlans.forEach((plan, index) => {
+        const purchaseDate = new Date(plan.date);
+        const durationDays = plan.duration || 7;
+        const expiryDate = new Date(purchaseDate.getTime() + durationDays*24*60*60*1000);
+
+        // Last claim or purchase date
+        let lastClaim = plan.lastClaim ? new Date(plan.lastClaim) : purchaseDate;
+
+        // Earnings calculation
+        const now = new Date();
+        const hoursPassed = Math.floor((Math.min(now, expiryDate) - lastClaim) / (1000*60*60));
+        const earned = hoursPassed * earningsPerHour;
+
+        const card = document.createElement("div");
+        card.className = "plan-card";
+        card.innerHTML = `
+            <h3>${plan.name}</h3>
+            <p><strong>Amount:</strong> ₦${plan.amount.toLocaleString()}</p>
+            <p><strong>Purchased:</strong> ${purchaseDate.toLocaleDateString()}</p>
+            <p class="expiry"><strong>Expires:</strong> ${expiryDate.toLocaleDateString()}</p>
+            <p class="earnings">Earned: ₦<span id="earned-${index}">${earned}</span></p>
+            <button class="claim-btn" onclick="claim(${index})">Claim</button>
+        `;
+        plansContainer.appendChild(card);
+    });
+}
+
+// =========================
+// Claim Function
+// =========================
+function claim(index){
+    const plan = myPlans[index];
+    const now = new Date();
+    const expiryDate = new Date(new Date(plan.date).getTime() + (plan.duration||7)*24*60*60*1000);
+    const lastClaim = plan.lastClaim ? new Date(plan.lastClaim) : new Date(plan.date);
+
+    const hoursPassed = Math.floor((Math.min(now, expiryDate) - lastClaim) / (1000*60*60));
+    const earned = hoursPassed * earningsPerHour;
+
+    if(earned <= 0){
+        alert("No earnings to claim yet.");
+        return;
+    }
+
+    // Update user's total balance
+    const currentBalance = parseFloat(localStorage.getItem(currentUser.username + "_balance") || 0);
+    localStorage.setItem(currentUser.username + "_balance", currentBalance + earned);
+
+    // Update last claim
+    plan.lastClaim = now.toISOString();
+    myPlans[index] = plan;
+    localStorage.setItem(currentUser.username + "_plans", JSON.stringify(myPlans));
+
+    // Update displayed earnings
+    document.getElementById(`earned-${index}`).innerText = 0;
+
+    alert(`Successfully claimed ₦${earned}!`);
+}
+
+// =========================
+// Auto-update earnings display (optional)
+// =========================
+function updateEarningsDisplay(){
+    myPlans.forEach((plan, index) => {
+        const purchaseDate = new Date(plan.date);
+        const durationDays = plan.duration || 7;
+        const expiryDate = new Date(purchaseDate.getTime() + durationDays*24*60*60*1000);
+        const lastClaim = plan.lastClaim ? new Date(plan.lastClaim) : purchaseDate;
+        const now = new Date();
+        const hoursPassed = Math.floor((Math.min(now, expiryDate) - lastClaim) / (1000*60*60));
+        const earned = hoursPassed * earningsPerHour;
+        const elem = document.getElementById(`earned-${index}`);
+        if(elem) elem.innerText = earned;
+    });
+}
+
+// =========================
+// Navigation Helper
+// =========================
+function go(page){
+    window.location.href = page;
+}
+
+// Initial render
+renderPlans();
+
+// Optional: refresh earnings every minute automatically
+setInterval(updateEarningsDisplay, 60000);
+</script>
+
+</body>
+</html>

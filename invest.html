@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Estate Earn | Invest</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background:#f4f7fb;
+}
+
+/* HEADER */
+header{
+    background:linear-gradient(to right,#1c1f2b,#2c5364);
+    color:#fff;
+    padding:16px 25px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+header h2{
+    font-weight:600;
+}
+
+header button{
+    background:#666;
+    color:#fff;
+    border:none;
+    padding:8px 14px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+/* CONTAINER */
+.container{
+    padding:25px;
+}
+
+/* BALANCE */
+.balance-box{
+    background:#fff3;
+    padding:20px;
+    border-radius:14px;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+    margin-bottom:25px;
+    text-align:center;
+}
+
+.balance-box h3{
+    color:#666;
+    font-size:14px;
+}
+
+.balance-box h1{
+    margin-top:8px;
+    color:#1c1f2b;
+}
+
+/* PLANS */
+.plans{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:20px;
+}
+
+.plan{
+    background:#2c5364;
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.1);
+}
+
+.plan img{
+    width:100%;
+    height:160px;
+    object-fit:cover;
+}
+
+.plan-content{
+    padding:18px;
+}
+
+.plan h3{
+    font-size:16px;
+    color:#fff;
+}
+
+.plan p{
+    font-size:13px;
+    color:#fff;
+    margin:8px 0;
+}
+
+.plan h2{
+    color:#fff;
+    margin:10px 0;
+}
+
+.plan button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:linear-gradient(to right,#1c1f2b,#2c5364);
+    color:#fff;
+    cursor:pointer;
+    font-size:14px;
+}
+
+/* POPUP */
+.popup-bg{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.4);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:1000;
+}
+
+.popup{
+    background:#fff;
+    width:320px;
+    border-radius:14px;
+    padding:20px;
+    text-align:center;
+}
+
+.popup h3{
+    margin-bottom:10px;
+}
+
+.popup p{
+    font-size:14px;
+    color:#333;
+}
+
+.popup .actions{
+    display:flex;
+    gap:10px;
+    margin-top:20px;
+}
+
+.popup button{
+    flex:1;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.confirm{
+    background:#1c1f2b;
+    color:#fff;
+}
+
+.cancel{
+    background:#ccc;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h2>Investment Plans</h2>
+    <button onclick="goBack()">← Dashboard</button>
+</header>
+
+<div class="container">
+
+<div class="balance-box">
+    <h3>Available Balance</h3>
+    <h1 id="balance">₦0.00</h1>
+</div>
+
+<div class="plans">
+
+    <div class="plan" data-roi="5" data-duration="7" data-price="5000">
+        <img src="owner.png">
+        <div class="plan-content">
+            <h3>Starter Plan</h3>
+            <p>Daily ROI: 5% • Duration: 7 Days</p>
+            <h2>₦5,000</h2>
+            <button onclick="buyPlan('Starter Plan',5000,5,7)">Invest</button>
+        </div>
+    </div>
+
+    <div class="plan" data-roi="7" data-duration="10" data-price="10000">
+        <img src="plan2.png">
+        <div class="plan-content">
+            <h3>Basic Plan</h3>
+            <p>Daily ROI: 7% • Duration: 10 Days</p>
+            <h2>₦10,000</h2>
+            <button onclick="buyPlan('Basic Plan',10000,7,10)">Invest</button>
+        </div>
+    </div>
+
+    <div class="plan" data-roi="10" data-duration="14" data-price="25000">
+        <img src="plan3.png">
+        <div class="plan-content">
+            <h3>Premium Plan</h3>
+            <p>Daily ROI: 10% • Duration: 14 Days</p>
+            <h2>₦25,000</h2>
+            <button onclick="buyPlan('Premium Plan',25000,10,14)">Invest</button>
+        </div>
+    </div>
+
+    <div class="plan" data-roi="15" data-duration="30" data-price="50000">
+        <img src="plan4.png">
+        <div class="plan-content">
+            <h3>VIP Plan</h3>
+            <p>Daily ROI: 15% • Duration: 30 Days</p>
+            <h2>₦50,000</h2>
+            <button onclick="buyPlan('VIP Plan',50000,15,30)">Invest</button>
+        </div>
+    </div>
+
+</div>
+
+</div>
+
+<!-- CONFIRMATION POPUP -->
+<div class="popup-bg" id="popupBg">
+    <div class="popup">
+        <h3 id="popupTitle"></h3>
+        <p id="popupText"></p>
+
+        <div class="actions">
+            <button class="confirm" onclick="confirmPurchase()">Confirm</button>
+            <button class="cancel" onclick="closePopup()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedPlan = null;
+let selectedPrice = 0;
+let selectedROI = 0;
+let selectedDuration = 0;
+let currentUser = null;
+
+// Check access
+function checkAccess(){
+    currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if(!currentUser || currentUser.role !== "earner"){
+        alert("Access denied! Only earners can access this page.");
+        window.location.href = "login.html";
+        return false;
+    }
+    return true;
+}
+
+// Load balance
+function loadBalance(){
+    if(!checkAccess()) return;
+    const balance = parseFloat(localStorage.getItem(currentUser.username + "_balance")) || 0;
+    document.getElementById("balance").innerText = "₦" + balance.toLocaleString();
+}
+loadBalance();
+
+// Buy plan
+function buyPlan(plan, price, roi, duration){
+    if(!checkAccess()) return;
+
+    selectedPlan = plan;
+    selectedPrice = price;
+    selectedROI = roi;
+    selectedDuration = duration;
+
+    document.getElementById("popupTitle").innerText = plan;
+    document.getElementById("popupText").innerText =
+        `Confirm investment of ₦${price.toLocaleString()}?\nDaily ROI: ${roi}%\nDuration: ${duration} days`;
+
+    document.getElementById("popupBg").style.display = "flex";
+}
+
+function closePopup(){
+    document.getElementById("popupBg").style.display = "none";
+}
+
+function confirmPurchase(){
+    if(!checkAccess()) return;
+
+    let balance = parseFloat(localStorage.getItem(currentUser.username + "_balance")) || 0;
+
+    if(balance < selectedPrice){
+        alert("Insufficient balance.");
+        closePopup();
+        return;
+    }
+
+    // Deduct balance
+    balance -= selectedPrice;
+    localStorage.setItem(currentUser.username + "_balance", balance);
+
+    // Calculate expected income
+    const expectedIncome = selectedPrice * (selectedROI/100) * selectedDuration;
+
+    // Income per hour
+    const incomePerHour = expectedIncome / (selectedDuration * 24);
+
+    // Save purchased plan
+    let plans = JSON.parse(localStorage.getItem(currentUser.username + "_plans")) || [];
+    plans.push({
+        name: selectedPlan,
+        amount: selectedPrice,
+        dailyROI: selectedROI,
+        duration: selectedDuration,
+        expectedIncome: expectedIncome,
+        incomePerHour: incomePerHour,
+        date: new Date().toISOString(),
+        lastClaim: null
+    });
+    localStorage.setItem(currentUser.username + "_plans", JSON.stringify(plans));
+
+    alert(`Investment successful!\nExpected income: ₦${expectedIncome.toLocaleString()}\nIncome per hour: ₦${incomePerHour.toFixed(2)}`);
+
+    closePopup();
+    loadBalance();
+}
+
+function goBack(){
+    window.location.href = "dashboard.html";
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Estate Earn | Manage Balance</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background:#f4f7fb;
+    display:flex;
+    min-height:100vh;
+}
+
+/* Sidebar */
+.sidebar{
+    width:250px;
+    background:linear-gradient(to bottom,#2c5364,#1c1f2b);
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    padding:20px;
+}
+
+.sidebar .logo{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:30px;
+}
+
+.sidebar img{
+    width:40px;
+}
+
+.sidebar h2{
+    font-weight:600;
+}
+
+.sidebar .nav-btn{
+    padding:14px;
+    margin-bottom:10px;
+    border-radius:8px;
+    background:rgba(255,255,255,0.1);
+    color:#fff;
+    cursor:pointer;
+    text-align:left;
+    font-size:14px;
+    transition:.3s;
+}
+
+.sidebar .nav-btn:hover{
+    background:rgba(255,255,255,0.2);
+}
+
+/* Main content */
+.main{
+    flex:1;
+    padding:25px;
+}
+
+header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+header .user{
+    font-size:14px;
+}
+
+.form-card{
+    background:#fff;
+    padding:25px;
+    border-radius:14px;
+    box-shadow:0 10px 25px rgba(0,0,0,.1);
+    max-width:500px;
+}
+
+.form-group{
+    margin-bottom:18px;
+}
+
+.form-group label{
+    display:block;
+    font-size:13px;
+    color:#444;
+    margin-bottom:6px;
+}
+
+.form-group input, .form-group select{
+    width:100%;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    font-size:14px;
+}
+
+.btn{
+    padding:13px;
+    border:none;
+    border-radius:10px;
+    background:linear-gradient(to right,#2c5364,#1c1f2b);
+    color:#fff;
+    font-size:15px;
+    font-weight:500;
+    cursor:pointer;
+    transition:.3s;
+    margin-top:10px;
+    width:100%;
+}
+
+.btn:hover{
+    opacity:.9;
+}
+
+/* Popup Notification */
+#popup{
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:#2c5364;
+    color:#fff;
+    padding:15px 20px;
+    border-radius:10px;
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+    display:none;
+    font-size:14px;
+    z-index:999;
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="logo">
+        <img src="owner.png" alt="Estate Earn">
+        <h2>Admin</h2>
+    </div>
+    <div class="nav-btn" onclick="go('chisom.html')">📊 Dashboard</div>
+    <div class="nav-btn" onclick="go('balance.html')">💰 Manage Balance</div>
+    <div class="nav-btn" onclick="viewUsers()">👥 Users</div>
+    <div class="nav-btn" onclick="logout()">🚪 Logout</div>
+</div>
+
+<!-- Main content -->
+<div class="main">
+<header>
+    <h2>Manage User Balance</h2>
+    <div class="user" id="helloUser"></div>
+</header>
+
+<div class="form-card">
+    <form id="balanceForm">
+        <div class="form-group">
+            <label>User Email</label>
+            <input type="email" id="userEmail" required placeholder="Enter user's email">
+        </div>
+
+        <div class="form-group">
+            <label>Action</label>
+            <select id="action" required>
+                <option value="increase">Increase Balance</option>
+                <option value="decrease">Reduce Balance</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Amount (₦)</label>
+            <input type="number" id="amount" min="1" required placeholder="Enter amount">
+        </div>
+
+        <button type="submit" class="btn">Submit</button>
+    </form>
+</div>
+</div>
+
+<!-- Notification -->
+<div id="popup"></div>
+
+<script>
+// Sidebar navigation
+function go(page){ window.location.href = page; }
+function logout(){ localStorage.removeItem("currentUser"); window.location.href="login.html"; }
+
+// Check admin authentication
+const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+if(!currentUser || currentUser.role !== "admin"){
+    alert("Access Denied! Admin login required.");
+    window.location.href="login.html";
+} else {
+    document.getElementById("helloUser").innerText = "Hello, " + currentUser.username;
+}
+
+// Form submission
+document.getElementById("balanceForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    const email = document.getElementById("userEmail").value.trim();
+    const action = document.getElementById("action").value;
+    const amount = parseFloat(document.getElementById("amount").value);
+
+    let users = JSON.parse(localStorage.getItem("estateUsers")) || [];
+    const user = users.find(u => u.email === email);
+
+    if(!user){
+        showPopup("User not found!");
+        return;
+    }
+
+    // Get current balance
+    const key = user.username + "_balance";
+    let currentBalance = parseFloat(localStorage.getItem(key) || 0);
+
+    if(action === "decrease"){
+        if(amount > currentBalance){
+            showPopup("Cannot reduce: user's balance is less than requested amount.");
+            return;
+        }
+        currentBalance -= amount;
+    } else {
+        currentBalance += amount;
+    }
+
+    localStorage.setItem(key, currentBalance.toFixed(2));
+    showPopup(`Balance updated successfully. New balance: ₦${currentBalance.toFixed(2)}`);
+});
+
+// Popup function
+function showPopup(message){
+    const popup = document.getElementById("popup");
+    popup.innerText = message;
+    popup.style.display = "block";
+    setTimeout(()=>{ popup.style.display="none"; }, 3000);
+}
+
+// Demo view users function
+function viewUsers(){
+    const users = JSON.parse(localStorage.getItem("estateUsers")) || [];
+    if(users.length === 0){
+        alert("No users found");
+        return;
+    }
+
+    let html = '<table style="width:100%;border-collapse:collapse;margin-top:20px;">';
+    html += '<tr><th>Username</th><th>Email</th><th>Phone</th><th>Balance (₦)</th><th>Role</th></tr>';
+    users.forEach(u=>{
+        const bal = parseFloat(localStorage.getItem(u.username+"_balance") || 0);
+        html += `<tr>
+            <td>${u.username}</td>
+            <td>${u.email}</td>
+            <td>${u.phone}</td>
+            <td>${bal.toFixed(2)}</td>
+            <td>${u.role}</td>
+        </tr>`;
+    });
+    html += '</table>';
+
+    const main = document.querySelector('.main');
+    main.innerHTML += html;
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Settings | Estate Earn</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{background:#f4f7fb;display:flex;min-height:100vh;position:relative;}
+
+/* SIDEBAR */
+.sidebar{
+    width:250px;
+    background:linear-gradient(to bottom,#2c5364,#1c1f2b);
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    padding:20px;
+    transition: width .3s ease;
+    position:relative;
+}
+.sidebar.collapsed{width:70px;}
+.sidebar .logo{display:flex;align-items:center;gap:10px;margin-bottom:30px;}
+.sidebar img{width:40px;transition: all .3s ease;}
+.sidebar.collapsed img{width:30px;}
+.sidebar h2{font-weight:600;transition: opacity .3s ease;}
+.sidebar.collapsed h2{opacity:0;}
+.sidebar .nav-btn{
+    padding:14px;margin-bottom:10px;border-radius:8px;
+    background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;text-align:left;
+    font-size:14px;transition:.3s;white-space: nowrap;overflow: hidden;
+}
+.sidebar.collapsed .nav-btn{text-align:center;font-size:18px;}
+.sidebar .nav-btn:hover{background:rgba(255,255,255,0.2);}
+
+/* MAIN */
+.main{flex:1;padding:25px;overflow-x:auto;transition: margin-left .3s ease;}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+header .user{font-size:14px;}
+#toggleBtn{
+    position:absolute;top:20px;right:-25px;width:30px;height:30px;
+    background:#2c5364;color:#fff;display:flex;align-items:center;justify-content:center;
+    border-radius:50%;cursor:pointer;font-weight:600;box-shadow:0 0 8px rgba(0,0,0,.3);
+    z-index:1000;
+}
+
+/* CARD SECTIONS */
+.card{
+    background:#fff;
+    padding:25px;
+    border-radius:14px;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+    margin-bottom:30px;
+    transition: transform .3s;
+}
+.card:hover{transform: translateY(-5px);}
+.card h3{margin-bottom:15px;color:#2c5364;}
+.card label{display:block;margin-bottom:5px;font-weight:500;color:#555;}
+.card input, .card textarea{
+    width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;margin-bottom:15px;font-size:14px;
+}
+.card button{
+    padding:12px 18px;background:linear-gradient(to right,#1c1f2b,#2c5364);
+    color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:500;
+}
+.card button:hover{opacity:0.9;}
+
+/* OFFLINE ALERT */
+#offlineAlert{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:#d9534f;color:#fff;padding:15px 25px;border-radius:10px;
+    box-shadow:0 4px 15px rgba(0,0,0,.3);z-index:10000;display:none;
+}
+
+/* FOOTER */
+footer{text-align:center;padding:20px;font-size:13px;color:#777;margin-top:30px;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+    <div class="logo">
+        <img src="owner.png" alt="Estate Earn">
+        <h2>Settings</h2>
+    </div>
+    <div id="toggleBtn" onclick="toggleSidebar()">☰</div>
+    <div class="nav-btn" onclick="go('dashboard.html')">📊 Dashboard</div>
+    <div class="nav-btn" onclick="go('plans.html')">💼 My Plans</div>
+    <div class="nav-btn" onclick="go('referral.html')">💸 Referrals</div>
+    <div class="nav-btn" onclick="go('settings.html')">⚙️ Settings</div>
+    <div class="nav-btn" onclick="logout()">🚪 Logout</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+<header>
+    <h2>Account Settings</h2>
+    <div class="user" id="helloUser"></div>
+</header>
+
+<!-- CHANGE LOGIN PASSWORD -->
+<div class="card">
+    <h3>Change Login Password</h3>
+    <label for="currentPassword">Current Password</label>
+    <input type="password" id="currentPassword" placeholder="Enter current password">
+    <label for="newPassword">New Password</label>
+    <input type="password" id="newPassword" placeholder="Enter new password">
+    <label for="confirmPassword">Confirm New Password</label>
+    <input type="password" id="confirmPassword" placeholder="Confirm new password">
+    <button onclick="changeLoginPassword()">Update Password</button>
+</div>
+
+<!-- CHANGE WITHDRAWAL PASSWORD -->
+<div class="card">
+    <h3>Change Withdrawal Password</h3>
+    <label for="currentWithdrawal">Current Withdrawal Password</label>
+    <input type="password" id="currentWithdrawal" placeholder="Enter current withdrawal password">
+    <label for="newWithdrawal">New Withdrawal Password</label>
+    <input type="password" id="newWithdrawal" placeholder="Enter new withdrawal password">
+    <label for="confirmWithdrawal">Confirm New Withdrawal Password</label>
+    <input type="password" id="confirmWithdrawal" placeholder="Confirm new withdrawal password">
+    <button onclick="changeWithdrawalPassword()">Update Withdrawal Password</button>
+</div>
+
+<!-- CONTACT SUPPORT -->
+<div class="card">
+    <h3>Contact Support</h3>
+    <label for="supportMessage">Your Message</label>
+    <textarea id="supportMessage" rows="4" placeholder="Describe your issue or inquiry"></textarea>
+    <button onclick="contactSupport()">Send Message</button>
+</div>
+
+<!-- INSTALL APP -->
+<div class="card">
+    <h3>Install Estate Earn App</h3>
+    <p>Install the app to get quick access and receive notifications even offline.</p>
+    <button onclick="installApp()">Install App</button>
+</div>
+
+<footer>© 2026 Estate Earn. All rights reserved.</footer>
+</div>
+
+<!-- OFFLINE ALERT -->
+<div id="offlineAlert">⚠ You are offline. Some features may not work.</div>
+
+<script>
+let deferredPrompt = null;
+
+// Sidebar toggle
+function toggleSidebar(){document.getElementById("sidebar").classList.toggle("collapsed");}
+
+// Redirect & logout
+function go(page){window.location.href=page;}
+function logout(){localStorage.removeItem("currentUser");window.location.href="login.html";}
+
+// Earner authentication
+const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+if(!currentUser || currentUser.role!=="earner"){
+    alert("Access Denied! Login as an earner.");
+    window.location.href="login.html";
+}else{
+    document.getElementById("helloUser").innerText = "Hello, "+currentUser.username;
+}
+
+// Change login password
+function changeLoginPassword(){
+    const curr=document.getElementById("currentPassword").value;
+    const newP=document.getElementById("newPassword").value;
+    const conf=document.getElementById("confirmPassword").value;
+    const storedPass=localStorage.getItem(currentUser.username+"_password")||"";
+    if(curr!==storedPass){alert("Current password is incorrect."); return;}
+    if(newP!==conf){alert("Passwords do not match."); return;}
+    localStorage.setItem(currentUser.username+"_password",newP);
+    alert("Login password updated successfully!");
+    document.getElementById("currentPassword").value="";
+    document.getElementById("newPassword").value="";
+    document.getElementById("confirmPassword").value="";
+}
+
+// Change withdrawal password
+function changeWithdrawalPassword(){
+    const curr=document.getElementById("currentWithdrawal").value;
+    const newW=document.getElementById("newWithdrawal").value;
+    const conf=document.getElementById("confirmWithdrawal").value;
+    const storedW=localStorage.getItem(currentUser.username+"_withdrawalPassword")||"";
+    if(curr!==storedW){alert("Current withdrawal password is incorrect."); return;}
+    if(newW!==conf){alert("Withdrawal passwords do not match."); return;}
+    localStorage.setItem(currentUser.username+"_withdrawalPassword",newW);
+    alert("Withdrawal password updated successfully!");
+    document.getElementById("currentWithdrawal").value="";
+    document.getElementById("newWithdrawal").value="";
+    document.getElementById("confirmWithdrawal").value="";
+}
+
+// Contact support
+function contactSupport(){
+    const msg=document.getElementById("supportMessage").value.trim();
+    if(msg===""){alert("Please enter a message."); return;}
+    let support=JSON.parse(localStorage.getItem("supportMessages"))||[];
+    support.push({user:currentUser.username,message:msg,date:new Date().toLocaleString()});
+    localStorage.setItem("supportMessages",JSON.stringify(support));
+    alert("Your message has been sent!");
+    document.getElementById("supportMessage").value="";
+}
+
+// Install App
+window.addEventListener('beforeinstallprompt', e=>{
+    e.preventDefault();
+    deferredPrompt=e;
+});
+function installApp(){
+    if(deferredPrompt){
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(choice=>{
+            if(choice.outcome==="accepted") alert("App installed successfully!");
+            else alert("App installation cancelled.");
+        });
+        deferredPrompt=null;
+    }else alert("Installation not available on this device/browser.");
+}
+
+// Offline detection
+function showOfflineAlert(){
+    document.getElementById("offlineAlert").style.display="block";
+    setTimeout(()=>document.getElementById("offlineAlert").style.display="none",5000);
+}
+window.addEventListener('offline', showOfflineAlert);
+</script>
+</body>
+</html>

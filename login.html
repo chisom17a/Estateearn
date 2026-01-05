@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Estate Earn | Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(135deg,#1c1f2b,#2c5364);
+}
+
+.login-card{
+    background:#fe3;
+    width:100%;
+    max-width:400px;
+    padding:30px;
+    border-radius:16px;
+    box-shadow:0 20px 40px rgba(0,0,0,.25);
+    position:relative;
+}
+
+.logo{
+    text-align:center;
+    margin-bottom:25px;
+}
+
+.logo img{
+    width:85px;
+}
+
+.logo h2{
+    margin-top:10px;
+    color:#2c5364;
+    font-weight:600;
+}
+
+.form-group{
+    margin-bottom:18px;
+}
+
+.form-group label{
+    display:block;
+    font-size:13px;
+    color:#444;
+    margin-bottom:6px;
+}
+
+.form-group input{
+    width:100%;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    font-size:14px;
+    transition:.3s;
+}
+
+.form-group input:focus{
+    outline:none;
+    border-color:#2c5364;
+    box-shadow:0 0 0 2px rgba(44,83,100,.15);
+}
+
+.btn{
+    width:100%;
+    padding:13px;
+    border:none;
+    border-radius:10px;
+    background:linear-gradient(to right,#2c5364,#1c1f2b);
+    color:#fff;
+    font-size:15px;
+    font-weight:500;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.btn:hover{
+    opacity:.9;
+}
+
+.links{
+    margin-top:18px;
+    text-align:center;
+    font-size:13px;
+}
+
+.links a{
+    color:#2c5364;
+    text-decoration:none;
+    font-weight:500;
+}
+
+/* Notification popup */
+#loginPopup{
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:#2c5364;
+    color:#fff;
+    padding:15px 20px;
+    border-radius:10px;
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+    display:none;
+    font-size:14px;
+    z-index:999;
+}
+</style>
+</head>
+
+<body>
+
+<div class="login-card">
+    <div class="logo">
+        <img src="owner.png" alt="Estate Earn Logo">
+        <h2>Estate Earn</h2>
+    </div>
+
+    <form id="loginForm">
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="email" required placeholder="example@email.com">
+        </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="password" required placeholder="Enter your password">
+        </div>
+
+        <button type="submit" class="btn">Login</button>
+    </form>
+
+    <div class="links">
+        Don’t have an account? <a href="index.html">Register</a>
+    </div>
+</div>
+
+<!-- Login Notification -->
+<div id="loginPopup">Login successful! Redirecting...</div>
+
+<script>
+document.getElementById("loginForm").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if(email === "" || password === ""){
+        alert("Please fill in all fields");
+        return;
+    }
+
+    // Get users from localStorage
+    let users = JSON.parse(localStorage.getItem("estateUsers")) || [];
+
+    // Check credentials
+    const user = users.find(u => u.email === email && u.password === password);
+
+    if(!user){
+        alert("Invalid email or password");
+        return;
+    }
+
+    // Save logged in user
+    localStorage.setItem("currentUser", JSON.stringify(user));
+
+    // Show notification
+    const popup = document.getElementById("loginPopup");
+    popup.style.display = "block";
+
+    // Redirect based on role
+    setTimeout(() => {
+        if(user.role === "earner"){
+            window.location.href = "dashboard.html";
+        } else if(user.role === "admin"){
+            window.location.href = "chisom.html";
+        } else {
+            alert("Unknown user role. Contact support.");
+        }
+    }, 1500);
+});
+</script>
+
+</body>
+</html>

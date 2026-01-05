@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Referral Program | Estate Earn</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+body{
+    margin:0;
+    font-family:'Poppins',sans-serif;
+    background:#fe3;
+    padding:20px;
+}
+
+/* HEADER */
+header{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+header h2{
+    font-weight:600;
+    color:#1c1f2b;
+    margin-bottom:5px;
+}
+
+header p{
+    color:#333;
+    font-size:14px;
+    margin-bottom:15px;
+}
+
+/* NAVIGATION BUTTONS */
+.navbar{
+    display:flex;
+    justify-content:center;
+    gap:15px;
+    margin-bottom:30px;
+    flex-wrap:wrap;
+}
+
+.navbar button{
+    padding:10px 20px;
+    border:none;
+    border-radius:8px;
+    background:linear-gradient(to right,#1c1f2b,#2c5364);
+    color:#fff;
+    font-weight:500;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.navbar button:hover{
+    background:linear-gradient(to right,#2c5364,#1c1f2b);
+}
+
+/* CONTAINER */
+.container{
+    max-width:1000px;
+    margin:0 auto;
+}
+
+/* REFERRAL CARD */
+.referral-card{
+    background:#fff;
+    padding:25px;
+    border-radius:14px;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+    margin-bottom:30px;
+    text-align:center;
+}
+
+.referral-card h3{
+    color:#1c1f2b;
+    margin-bottom:10px;
+}
+
+.referral-card p{
+    color:#555;
+    font-size:14px;
+    margin-bottom:15px;
+}
+
+.referral-link{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.referral-link input{
+    width:70%;
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    font-size:14px;
+}
+
+.referral-link button{
+    padding:10px 15px;
+    border:none;
+    border-radius:8px;
+    background:linear-gradient(to right,#1c1f2b,#2c5364);
+    color:#fff;
+    cursor:pointer;
+    font-weight:500;
+}
+
+/* STATS GRID */
+.stats{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:#fff;
+    border-radius:14px;
+    padding:20px;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+    text-align:center;
+}
+
+.card h4{
+    font-size:14px;
+    color:#666;
+}
+
+.card h2{
+    margin-top:10px;
+    color:#1c1f2b;
+}
+
+/* FOOTER */
+footer{
+    text-align:center;
+    padding:20px;
+    font-size:13px;
+    color:#777;
+    margin-top:30px;
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h2>Referral Program</h2>
+    <p>Earn extra commissions by inviting friends to Estate Earn</p>
+</header>
+
+<!-- NAVIGATION BUTTONS -->
+<div class="navbar">
+    <button onclick="navigate('dashboard.html')">Dashboard</button>
+    <button onclick="navigate('myplans.html')">My Plans</button>
+    <button onclick="navigate('invest.html')">Invest now</button>
+    <button onclick="navigate('withdraw.html')">withdraw</button>
+</div>
+
+<div class="container">
+
+<!-- REFERRAL CARD -->
+<div class="referral-card">
+    <h3>Your Referral Link</h3>
+    <div class="referral-link">
+        <input type="text" id="referralInput" readonly>
+        <button onclick="copyReferral()">Copy</button>
+    </div>
+    <p>Share this link with friends and get <strong>10%</strong> of their first deposit as a commission. The more friends you invite, the more you earn!</p>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+    <div class="card">
+        <h4>Total Referrals</h4>
+        <h2 id="totalReferrals">0</h2>
+    </div>
+    <div class="card">
+        <h4>Total Commission Earned</h4>
+        <h2 id="totalCommission">₦0.00</h2>
+    </div>
+</div>
+
+<footer>
+© 2026 Estate Earn. All rights reserved.
+</footer>
+
+<script>
+// Navigation helper
+function navigate(page){
+    window.location.href = page;
+}
+
+// Get current user
+const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+if(!currentUser || currentUser.role !== "earner"){
+    alert("Access Denied! Login as an earner.");
+    window.location.href="login.html";
+}
+
+// Generate referral link
+const referralInput = document.getElementById("referralInput");
+const baseURL = window.location.origin + "/signup.html?ref=";
+referralInput.value = baseURL + currentUser.username;
+
+// Copy referral link
+function copyReferral(){
+    referralInput.select();
+    referralInput.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    alert("Referral link copied to clipboard!");
+}
+
+// Load referral stats
+const allUsers = JSON.parse(localStorage.getItem("estateUsers")) || [];
+let referrals = 0;
+let commission = 0;
+
+allUsers.forEach(u=>{
+    if(u.referredBy === currentUser.username){
+        referrals++;
+        const firstDeposit = parseFloat(localStorage.getItem(u.username + "_investment") || 0);
+        commission += firstDeposit * 0.10;
+    }
+});
+
+document.getElementById("totalReferrals").innerText = referrals;
+document.getElementById("totalCommission").innerText = "₦" + commission.toLocaleString();
+</script>
+
+</body>
+</html>

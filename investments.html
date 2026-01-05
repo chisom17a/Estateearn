@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Estate Earn | Investments</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{background:#f4f7fb;display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{
+    width:250px;
+    background:linear-gradient(to bottom,#2c5364,#1c1f2b);
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    padding:20px;
+    transition: width .3s ease;
+    position:relative;
+}
+.sidebar.collapsed{width:70px;}
+.sidebar .logo{display:flex;align-items:center;gap:10px;margin-bottom:30px;}
+.sidebar img{width:40px;transition: all .3s ease;}
+.sidebar.collapsed img{width:30px;}
+.sidebar h2{font-weight:600;transition: opacity .3s ease;}
+.sidebar.collapsed h2{opacity:0;}
+.sidebar .nav-btn{
+    padding:14px;margin-bottom:10px;border-radius:8px;
+    background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;text-align:left;
+    font-size:14px;transition:.3s;white-space: nowrap;overflow: hidden;
+}
+.sidebar.collapsed .nav-btn{text-align:center;font-size:18px;}
+.sidebar .nav-btn:hover{background:rgba(255,255,255,0.2);}
+
+/* MAIN */
+.main{flex:1;padding:25px;overflow-x:auto;transition: margin-left .3s ease;}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+header .user{font-size:14px;}
+#toggleBtn{
+    position:absolute;top:20px;right:-25px;width:30px;height:30px;
+    background:#2c5364;color:#fff;display:flex;align-items:center;justify-content:center;
+    border-radius:50%;cursor:pointer;font-weight:600;box-shadow:0 0 8px rgba(0,0,0,.3);
+    z-index:1000;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+th, td{
+    padding:12px;border:1px solid #ddd;text-align:left;
+}
+th{background:#2c5364;color:#fff;font-weight:500;}
+.pagination{
+    margin-top:15px; display:flex; gap:5px; justify-content:center;
+}
+.page-btn{
+    padding:8px 12px; border:none; border-radius:6px; background:#2c5364;
+    color:#fff; cursor:pointer; transition:.3s;
+}
+.page-btn:hover{opacity:.8;}
+.page-btn.active{background:#1c1f2b;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+    <div class="logo">
+        <img src="owner.png" alt="Estate Earn">
+        <h2>Admin</h2>
+    </div>
+    <div id="toggleBtn" onclick="toggleSidebar()">☰</div>
+    <div class="nav-btn" onclick="go('chisom.html')">📊 Dashboard</div>
+    <div class="nav-btn" onclick="go('user.html')">👥 Users</div>
+    <div class="nav-btn" onclick="go('investments.html')">💼 Investments</div>
+    <div class="nav-btn" onclick="go('referrals.html')">💸 Referrals</div>
+    <div class="nav-btn" onclick="go('balance.html')">⚙️ Settings</div>
+    <div class="nav-btn" onclick="logout()">🚪 Logout</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+<header>
+    <h2>Investments</h2>
+    <div class="user" id="helloUser"></div>
+</header>
+
+<div id="investmentTableContainer"></div>
+<div class="pagination" id="pagination"></div>
+
+<footer>© 2026 Estate Earn. All rights reserved.</footer>
+</div>
+
+<script>
+// Toggle sidebar
+function toggleSidebar(){document.getElementById("sidebar").classList.toggle("collapsed");}
+
+// Redirect helper
+function go(page){window.location.href = page;}
+
+// Logout
+function logout(){
+    localStorage.removeItem("currentUser");
+    window.location.href="login.html";
+}
+
+// Admin authentication
+const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+if(!currentUser || currentUser.role !== "admin"){
+    alert("Access Denied! Admin login required.");
+    window.location.href="login.html";
+}else{
+    document.getElementById("helloUser").innerText = "Hello, " + currentUser.username;
+}
+
+// Collect all investments
+const users = JSON.parse(localStorage.getItem("estateUsers")) || [];
+let investments = [];
+
+users.forEach(u=>{
+    const plans = JSON.parse(localStorage.getItem(u.username + "_plans")) || [];
+    plans.forEach(p=>{
+        const purchaseDate = new Date(p.date);
+        const durationDays = p.duration || 7;
+        const expiryDate = new Date(purchaseDate.getTime() + durationDays*24*60*60*1000);
+        const incomePerHour = p.incomePerHour || 0;
+        const hoursElapsed = Math.min((Date.now() - purchaseDate.getTime())/3600000, durationDays*24);
+        const earned = incomePerHour * hoursElapsed;
+        const balanceLeft = p.amount + (incomePerHour*durationDays*24) - earned;
+
+        investments.push({
+            username: u.username,
+            email: u.email,
+            plan: p.name,
+            amount: p.amount,
+            purchaseDate: purchaseDate.toLocaleDateString(),
+            expiryDate: expiryDate.toLocaleDateString(),
+            incomePerHour: incomePerHour.toFixed(2),
+            earned: earned.toFixed(2),
+            balanceLeft: balanceLeft.toFixed(2)
+        });
+    });
+});
+
+// Pagination variables
+let currentPage = 1;
+const rowsPerPage = 5;
+
+// Render table
+function renderTable(page){
+    const start = (page-1)*rowsPerPage;
+    const end = start+rowsPerPage;
+    const paginatedItems = investments.slice(start,end);
+
+    let html = `<table>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Plan</th>
+            <th>Amount</th>
+            <th>Income/Hour</th>
+            <th>Earned</th>
+            <th>Purchased</th>
+            <th>Expires</th>
+            <th>Balance Left</th>
+        </tr>`;
+    
+    paginatedItems.forEach(i=>{
+        html+=`<tr>
+            <td>${i.username}</td>
+            <td>${i.email}</td>
+            <td>${i.plan}</td>
+            <td>₦${i.amount}</td>
+            <td>₦${i.incomePerHour}</td>
+            <td>₦${i.earned}</td>
+            <td>${i.purchaseDate}</td>
+            <td>${i.expiryDate}</td>
+            <td>₦${i.balanceLeft}</td>
+        </tr>`;
+    });
+
+    html+="</table>";
+    document.getElementById("investmentTableContainer").innerHTML = html;
+    renderPagination();
+}
+
+// Pagination buttons
+function renderPagination(){
+    const pageCount = Math.ceil(investments.length/rowsPerPage);
+    let html = "";
+    for(let i=1;i<=pageCount;i++){
+        html+=`<button class="page-btn ${i===currentPage?'active':''}" onclick="changePage(${i})">${i}</button>`;
+    }
+    document.getElementById("pagination").innerHTML = html;
+}
+
+function changePage(page){
+    currentPage = page;
+    renderTable(currentPage);
+}
+
+// Initial render
+renderTable(currentPage);
+</script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Deposit Verification | Estate Earn</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{background:#f4f7fb;display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{
+    width:220px;
+    background:linear-gradient(to bottom,#2c5364,#1c1f2b);
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    padding:20px;
+}
+.sidebar .logo{display:flex;align-items:center;gap:10px;margin-bottom:30px;}
+.sidebar .nav-btn{
+    padding:12px;margin-bottom:10px;border-radius:8px;
+    background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;text-align:left;
+    font-size:14px;
+}
+.sidebar .nav-btn:hover{background:rgba(255,255,255,0.2);}
+
+/* MAIN */
+.main{flex:1;padding:25px;overflow-x:auto;}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+header h2{color:#2c5364;}
+.deposit-card{
+    background:#fff;padding:20px;margin-bottom:15px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.08);
+}
+.deposit-card h4{color:#2c5364;margin-bottom:8px;}
+.deposit-card p{font-size:14px;margin-bottom:5px;}
+.deposit-card .highlight{font-weight:600;color:#28a745;}
+.deposit-card button{
+    padding:8px 12px;margin-right:8px;border:none;border-radius:6px;
+    cursor:pointer;font-weight:500;
+}
+.approve-btn{background:green;color:#fff;}
+.reject-btn{background:red;color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="logo">
+        <img src="owner.png" alt="Estate Earn" style="width:40px;">
+        <h2>Admin Deposits</h2>
+    </div>
+    <div class="nav-btn" onclick="go('dashboard.html')">📊 Dashboard</div>
+    <div class="nav-btn" onclick="go('support.html')">💬 Support</div>
+    <div class="nav-btn" onclick="logout()">🚪 Logout</div>
+</div>
+
+<div class="main">
+<header>
+    <h2>Deposit Verification</h2>
+</header>
+
+<div id="depositsContainer">
+    <!-- Deposits will be rendered here -->
+</div>
+
+</div>
+
+<script>
+// Admin auth
+const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+if(!currentUser || currentUser.role!=="admin"){
+    alert("Access Denied! Admin login required.");
+    window.location.href="login.html";
+}
+
+// Navigation
+function go(page){window.location.href=page;}
+function logout(){localStorage.removeItem("currentUser");window.location.href="login.html";}
+
+// Load deposits
+function loadDeposits(){
+    const container = document.getElementById("depositsContainer");
+    container.innerHTML="";
+    
+    const users = JSON.parse(localStorage.getItem("estateUsers")) || [];
+    let deposits = [];
+    
+    users.forEach(u=>{
+        const userDeposits = JSON.parse(localStorage.getItem(u.username + "_deposits")) || [];
+        userDeposits.forEach(d=>{
+            deposits.push({...d, username:u.username});
+        });
+    });
+
+    if(deposits.length===0){
+        container.innerHTML="<p>No deposits found.</p>";
+        return;
+    }
+
+    deposits.forEach((d, index)=>{
+        const card = document.createElement("div");
+        card.className="deposit-card";
+        card.innerHTML=`
+            <h4>User: ${d.username}</h4>
+            <p><strong>Amount:</strong> ₦${d.amount.toLocaleString()}</p>
+            <p><strong>Method:</strong> ${d.method}</p>
+            <p><strong>Status:</strong> ${d.status || "Pending"}</p>
+            <p><strong>Proof:</strong> ${d.proof || "Not uploaded"}</p>
+            ${d.status!=="Approved" ? `
+                <button class="approve-btn" onclick="approveDeposit(${index})">Approve</button>
+                <button class="reject-btn" onclick="rejectDeposit(${index})">Reject</button>
+            ` : ''}
+        `;
+        container.appendChild(card);
+    });
+}
+
+// Approve deposit
+function approveDeposit(index){
+    const users = JSON.parse(localStorage.getItem("estateUsers")) || [];
+    let depositsFlat = [];
+    
+    // Flatten deposits and keep reference
+    users.forEach(u=>{
+        const userDeposits = JSON.parse(localStorage.getItem(u.username + "_deposits")) || [];
+        userDeposits.forEach(d=>{
+            depositsFlat.push({...d, username:u.username});
+        });
+    });
+
+    const deposit = depositsFlat[index];
+    const userDeposits = JSON.parse(localStorage.getItem(deposit.username + "_deposits")) || [];
+    
+    let amount = parseFloat(deposit.amount);
+    const input = prompt(`Approve deposit of ₦${amount} for ${deposit.username}. Confirm amount:`, amount);
+    if(input===null) return;
+    amount = parseFloat(input);
+    if(isNaN(amount) || amount<=0){
+        alert("Invalid amount.");
+        return;
+    }
+
+    // Update user's balances
+    const currentBalance = parseFloat(localStorage.getItem(deposit.username + "_balance") || 0);
+    const dailyBalance = parseFloat(localStorage.getItem(deposit.username + "_dailyBalance") || 0);
+    localStorage.setItem(deposit.username + "_balance", currentBalance + amount);
+    localStorage.setItem(deposit.username + "_dailyBalance", dailyBalance + amount);
+
+    // Referral bonus
+    const referrer = users.find(u=>u.username===deposit.referrer);
+    if(referrer){
+        const referralBonus = amount * 0.10;
+        const refReward = parseFloat(localStorage.getItem(referrer.username + "_referralBalance") || 0);
+        const refTotal = parseFloat(localStorage.getItem(referrer.username + "_balance") || 0);
+        localStorage.setItem(referrer.username + "_referralBalance", refReward + referralBonus);
+        localStorage.setItem(referrer.username + "_balance", refTotal + referralBonus);
+    }
+
+    // Mark deposit as approved
+    const updatedDeposits = userDeposits.map(d=>{
+        if(d.date === deposit.date && d.amount===deposit.amount){
+            d.status="Approved";
+            d.approvedBy=currentUser.username;
+        }
+        return d;
+    });
+    localStorage.setItem(deposit.username + "_deposits", JSON.stringify(updatedDeposits));
+    alert(`Deposit of ₦${amount} approved for ${deposit.username}`);
+    loadDeposits();
+}
+
+// Reject deposit
+function rejectDeposit(index){
+    const users = JSON.parse(localStorage.getItem("estateUsers")) || [];
+    let depositsFlat = [];
+    
+    users.forEach(u=>{
+        const userDeposits = JSON.parse(localStorage.getItem(u.username + "_deposits")) || [];
+        userDeposits.forEach(d=>{
+            depositsFlat.push({...d, username:u.username});
+        });
+    });
+
+    const deposit = depositsFlat[index];
+    const userDeposits = JSON.parse(localStorage.getItem(deposit.username + "_deposits")) || [];
+    const updatedDeposits = userDeposits.map(d=>{
+        if(d.date === deposit.date && d.amount===deposit.amount){
+            d.status="Rejected";
+            d.rejectedBy=currentUser.username;
+        }
+        return d;
+    });
+    localStorage.setItem(deposit.username + "_deposits", JSON.stringify(updatedDeposits));
+    alert(`Deposit of ₦${deposit.amount} rejected for ${deposit.username}`);
+    loadDeposits();
+}
+
+// Initial load
+loadDeposits();
+</script>
+
+</body>
+</html>
