@@ -152,7 +152,6 @@ footer{
     <p>Earn extra commissions by inviting friends to Estate Earn</p>
 </header>
 
-<!-- NAVIGATION BUTTONS -->
 <div class="navbar">
     <button onclick="navigate('dashboard.html')">Dashboard</button>
     <button onclick="navigate('myplans.html')">My Plans</button>
@@ -162,17 +161,18 @@ footer{
 
 <div class="container">
 
-<!-- REFERRAL CARD -->
 <div class="referral-card">
     <h3>Your Referral Link</h3>
     <div class="referral-link">
         <input type="text" id="referralInput" readonly>
         <button onclick="copyReferral()">Copy</button>
     </div>
-    <p>Share this link with friends and get <strong>10%</strong> of their first deposit as a commission. The more friends you invite, the more you earn!</p>
+    <p>
+        Share this link with friends and get <strong>10%</strong> of their first deposit as a commission.
+        The more friends you invite, the more you earn!
+    </p>
 </div>
 
-<!-- STATS -->
 <div class="stats">
     <div class="card">
         <h4>Total Referrals</h4>
@@ -201,16 +201,16 @@ if(!currentUser || currentUser.role !== "earner"){
     window.location.href="login.html";
 }
 
-// Generate referral link
+// ✅ CORRECT REFERRAL LINK (index.html)
 const referralInput = document.getElementById("referralInput");
-const baseURL = window.location.origin + "/signup.html?ref=";
+const baseURL = window.location.origin + "/?ref=";
 referralInput.value = baseURL + currentUser.username;
 
 // Copy referral link
 function copyReferral(){
     referralInput.select();
     referralInput.setSelectionRange(0, 99999);
-    document.execCommand("copy");
+    navigator.clipboard.writeText(referralInput.value);
     alert("Referral link copied to clipboard!");
 }
 
