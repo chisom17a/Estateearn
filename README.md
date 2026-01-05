@@ -1,0 +1,2 @@
+# Estateearn
+Simple investment platform 
