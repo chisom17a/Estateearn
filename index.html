@@ -21,26 +21,19 @@ body{
     justify-content:center;
     background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
 }
-
-/* Registration Card */
 .register-card{
-    background:#de3;
+    background:#fff;
     width:100%;
     max-width:420px;
     border-radius:16px;
     padding:30px 28px;
     box-shadow:0 15px 40px rgba(0,0,0,.25);
-    position:relative;
 }
-
-/* Logo */
 .logo{text-align:center;margin-bottom:20px}
 .logo img{width:90px}
 .logo h2{margin-top:10px;color:#203a43}
-
-/* Form */
 .form-group{margin-bottom:15px}
-.form-group label{display:block;font-size:13px;margin-bottom:6px}
+.form-group label{font-size:13px}
 .form-group input{
     width:100%;
     padding:12px;
@@ -59,9 +52,6 @@ small{font-size:11px;color:#555}
     margin-top:10px;
 }
 .footer-text{text-align:center;margin-top:18px;font-size:13px}
-.footer-text a{text-decoration:none;color:#203a43;font-weight:500}
-
-/* Notification Popup */
 #successPopup{
     position:fixed;
     top:20px;
@@ -70,10 +60,7 @@ small{font-size:11px;color:#555}
     color:#fff;
     padding:15px 20px;
     border-radius:10px;
-    box-shadow:0 10px 30px rgba(0,0,0,.2);
     display:none;
-    font-size:14px;
-    z-index:999;
 }
 </style>
 </head>
@@ -82,133 +69,143 @@ small{font-size:11px;color:#555}
 
 <div class="register-card">
     <div class="logo">
-        <img src="owner.png" alt="Estate Earn Logo">
+        <img src="owner.png">
         <h2>Estate Earn</h2>
     </div>
 
     <form id="registerForm">
-
         <div class="form-group">
             <label>Username</label>
-            <input type="text" id="username" required placeholder="Unique username">
+            <input id="username" required>
         </div>
 
         <div class="form-group">
-            <label>Email Address</label>
-            <input type="email" id="email" required>
+            <label>Email</label>
+            <input id="email" type="email" required>
         </div>
 
         <div class="form-group">
-            <label>Phone Number</label>
-            <input type="tel" id="phone" required>
+            <label>Phone</label>
+            <input id="phone" required>
         </div>
 
         <div class="form-group">
             <label>Password</label>
-            <input type="password" id="password" required>
-            <small>Must contain letters and numbers</small>
+            <input id="password" type="password" required>
+            <small>Letters & numbers</small>
         </div>
 
         <div class="form-group">
             <label>Withdrawal Password</label>
-            <input type="password" id="withdrawal" maxlength="6" required>
-            <small>Exactly 6 digits</small>
+            <input id="withdrawal" maxlength="6" required>
         </div>
 
         <div class="form-group">
             <label>Referral Code (Optional)</label>
-            <input type="text" id="referral">
+            <input id="referral">
         </div>
 
         <button class="btn">Create Account</button>
     </form>
 
     <div class="footer-text">
-        Already have an account? <a href="login.html">Login</a>
+        Already registered? <a href="login.html">Login</a>
     </div>
 </div>
 
-<!-- Success Notification -->
-<div id="successPopup">Registration successful! Redirecting to login...</div>
+<div id="successPopup">Registration successful! Redirecting…</div>
 
-<script>
-// Load users
-let users = JSON.parse(localStorage.getItem("estateUsers")) || [];
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  increment,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-// Autofill referral from URL
+const firebaseConfig = {
+  apiKey: "AIzaSyC-wOINz7Hz9r2aUXlUhfmPqwuxTGmkIK8",
+  authDomain: "main-estateearn.firebaseapp.com",
+  projectId: "main-estateearn",
+  storageBucket: "main-estateearn.firebasestorage.app",
+  messagingSenderId: "189305498914",
+  appId: "1:189305498914:web:77fe6b137b2480e3f2c97b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Autofill referral
 const params = new URLSearchParams(window.location.search);
 if(params.get("ref")){
-    document.getElementById("referral").value = params.get("ref");
+  document.getElementById("referral").value = params.get("ref");
 }
 
-document.getElementById("registerForm").addEventListener("submit", function(e){
-    e.preventDefault();
+document.getElementById("registerForm").addEventListener("submit", async e => {
+  e.preventDefault();
 
-    const username = document.getElementById("username").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const password = document.getElementById("password").value;
-    const withdrawal = document.getElementById("withdrawal").value;
-    let referral = document.getElementById("referral").value.trim();
+  const username = document.getElementById("username").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const password = document.getElementById("password").value;
+  const withdrawal = document.getElementById("withdrawal").value;
+  let referral = document.getElementById("referral").value.trim();
 
-    const alphaNum = /^(?=.*[A-Za-z])(?=.*\d)/;
-    const sixDigits = /^[0-9]{6}$/;
+  if(referral && referral === username){
+    alert("You cannot use your username as referral code");
+    referral = "";
+  }
 
-    if(!alphaNum.test(password)){
-        alert("Password must contain letters and numbers");
-        return;
+  const userRef = doc(db, "users", username);
+  const userSnap = await getDoc(userRef);
+  if(userSnap.exists()){
+    alert("Username already exists");
+    return;
+  }
+
+  // Validate referral
+  let validReferral = null;
+  if(referral){
+    const refRef = doc(db, "users", referral);
+    const refSnap = await getDoc(refRef);
+    if(refSnap.exists()){
+      validReferral = referral;
+      await updateDoc(refRef, {
+        referralCount: increment(1)
+      });
+    }else{
+      alert("Referral code not found. It has been removed.");
+      referral = "";
     }
+  }
 
-    if(!sixDigits.test(withdrawal)){
-        alert("Withdrawal password must be exactly 6 digits");
-        return;
-    }
+  const referralBalance = 0;
+  const depositBalance = 0;
+  const earningBalance = 0;
 
-    // Check duplicates
-    const exists = users.find(u =>
-        u.username === username ||
-        u.email === email ||
-        u.phone === phone
-    );
+  await setDoc(userRef, {
+    username,
+    email,
+    phone,
+    password,
+    withdrawalPassword: withdrawal,
+    referralCode: validReferral,
+    referralCount: 0,
+    welcomeBonusStatus: "pending",
+    referralBalance,
+    depositBalance,
+    earningBalance,
+    totalBalance: referralBalance + depositBalance + earningBalance,
+    createdAt: serverTimestamp()
+  });
 
-    if(exists){
-        alert("Username, email or phone number already exists");
-        return;
-    }
-
-    // Referral validation
-    if(referral){
-        const refExists = users.find(u => u.referralCode === referral || u.username === referral);
-        if(!refExists){
-            const choice = confirm(
-                "Referral code not found.\n\nOK = Generate free referral code\nCancel = Leave empty"
-            );
-            referral = choice ? "Hassan" : "";
-        }
-    }
-
-    const newUser = {
-        username,
-        email,
-        phone,
-        password,
-        withdrawalPassword: withdrawal,
-        referralCode: referral || "Hassan",
-        role: "earner",
-        createdAt: new Date().toISOString()
-    };
-
-    users.push(newUser);
-    localStorage.setItem("estateUsers", JSON.stringify(users));
-
-    // Show notification
-    const popup = document.getElementById("successPopup");
-    popup.style.display = "block";
-
-    // Redirect after 3 seconds
-    setTimeout(() => {
-        window.location.href = "login.html";
-    }, 3000);
+  document.getElementById("successPopup").style.display = "block";
+  setTimeout(() => window.location.href = "login.html", 3000);
 });
 </script>
 
